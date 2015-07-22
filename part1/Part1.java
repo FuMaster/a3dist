@@ -11,12 +11,11 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
-public class GeneReader {
+public class Part1 {
 
   public static class TokenizerMapper 
        extends Mapper<Object, Text, Text, Text>{
@@ -61,7 +60,7 @@ public class GeneReader {
       System.exit(2);
     }
     Job job = new Job(conf, "word count");
-    job.setJarByClass(GeneReader.class);
+    job.setJarByClass(Part1.class);
     job.setMapperClass(TokenizerMapper.class);
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
