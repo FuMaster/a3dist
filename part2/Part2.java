@@ -20,10 +20,10 @@ import org.apache.hadoop.util.GenericOptionsParser;
 public class Part2 {
 
   public static class TokenizerMapper 
-       extends Mapper<Object, Text, Text, Text>{
+       extends Mapper<Object, Text, IntWritable, Text>{
     
     private Text isCancer = new Text();
-    private Text gID = new Text();  
+    private IntWritable gID = new IntWritable();  
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
@@ -43,7 +43,7 @@ public class Part2 {
 	   isCancer.set("1");
 	}
 	counter++;
-	gID.set("gene_"+counter);
+	gID.set(counter);
 	context.write(gID, isCancer);
       }
 
@@ -51,10 +51,10 @@ public class Part2 {
   }
   
   public static class GeneCombiner 
-       extends Reducer<Text,Text,Text,Text> {
+       extends Reducer<IntWritable,Text,IntWritable,Text> {
     private Text result = new Text();
                                                                   
-    public void reduce(Text key, Iterable<Text> values, 
+    public void reduce(IntWritable key, Iterable<Text> values, 
                        Context context
                        ) throws IOException, InterruptedException {
       int sum = 0;
@@ -70,14 +70,13 @@ public class Part2 {
   }
 
   public static class GeneReducer 
-       extends Reducer<Text,Text,Text,DoubleWritable> {
+       extends Reducer<IntWritable,Text,Text,DoubleWritable> {
     private DoubleWritable result = new DoubleWritable();
+    private Text newKey = new Text();
 
-    public void reduce(Text key, Iterable<Text> values, 
+    public void reduce(IntWritable key, Iterable<Text> values, 
                        Context context
                        ) throws IOException, InterruptedException {
-
-      System.out.println( "Key: " + key.toString() );
 
       double sum = 0.0;
       int total = 0;
@@ -90,7 +89,8 @@ public class Part2 {
       }
       
       result.set( sum/total );
-      context.write(key, result);
+      newKey.set("gene_"+key.toString());
+      context.write(newKey, result);
     }
   }
 
@@ -107,7 +107,7 @@ public class Part2 {
     job.setMapperClass(TokenizerMapper.class);
     job.setCombinerClass(GeneCombiner.class);
     job.setReducerClass(GeneReducer.class);
-    job.setOutputKeyClass(Text.class);
+    job.setOutputKeyClass(IntWritable.class);
     job.setOutputValueClass(Text.class);
     FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
     FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
