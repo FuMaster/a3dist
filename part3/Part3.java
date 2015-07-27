@@ -1,5 +1,5 @@
-/*sampleIDsam
-  Code copied from https://github.com/facebookarchive/hadoop-20/blob/master/src/examples/org/apache/hadoop/examples/WordCount.java
+/*
+Code copied from https://github.com/facebookarchive/hadoop-20/blob/master/src/examples/org/apache/hadoop/examples/WordCount.java
 */
 
 import java.io.IOException;
@@ -101,6 +101,7 @@ public class Part3 {
     
     private MapWritable result = new MapWritable();
     private Text sID = new Text();  
+	private ArrayList<String> list = new ArrayList<String>();
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
@@ -108,7 +109,6 @@ public class Part3 {
 
       //skip geneID
       itr.nextToken();
-      ArrayList<String> list = new ArrayList<String>();
 
       while (itr.hasMoreTokens()) {
 		String token = itr.nextToken();
@@ -118,7 +118,7 @@ public class Part3 {
 		for (String item2 : list) {
 	   		String[] t2 = item2.split(":");
 	   		double xProduct = Double.parseDouble(t2[1])*v1;
-			System.out.println("Key1: "+t1[0]+", Key2: "+t2[0]+", Value: "+xProduct);
+	//		System.out.println("Key1: "+t1[0]+", Key2: "+t2[0]+", Value: "+xProduct);
 	   		result.put( new Text(t2[0]), new DoubleWritable(xProduct));
 		}
 
@@ -130,17 +130,19 @@ public class Part3 {
 		list.add(token);
 		result.clear();
 	 }
-
+	 list.clear();
     }
   }
 
   public static class SampleCombiner 
        extends Reducer<Text,MapWritable,Text,MapWritable> {
-    private MapWritable result = new MapWritable();
-                                                                  
-    public void reduce(Text key, Iterable<MapWritable> values, 
+ 
+	private MapWritable result = new MapWritable();
+
+   public void reduce(Text key, Iterable<MapWritable> values, 
                        Context context
                        ) throws IOException, InterruptedException {
+
       for (MapWritable val : values) {
 	  	for (Map.Entry<Writable, Writable> entry : val.entrySet()) {
 	    	Text valKey = (Text)entry.getKey();
@@ -149,11 +151,13 @@ public class Part3 {
 	     	if(result.containsKey(valKey)) {
 				entryVal += ((DoubleWritable)result.get(valKey)).get();
 	     	}
+
 	     	result.put(valKey, new DoubleWritable(entryVal));
 	  	}
 	  }
 
 	  context.write(key, result);
+	  result.clear();
     }
   }
 
@@ -162,21 +166,24 @@ public class Part3 {
 
     private Text pair = new Text();
     private DoubleWritable result = new DoubleWritable();
+	private HashMap<String,Double> map = new HashMap<String,Double>();
 
     public void reduce(Text key, Iterable<MapWritable> values, 
                        Context context
                        ) throws IOException, InterruptedException {
 
-      HashMap<String,Double> map = new HashMap<String,Double>();
       for (MapWritable val : values) {
 		for (Map.Entry<Writable, Writable> entry : val.entrySet()) {
-    	   	Text valKey = (Text)entry.getKey();
-	   		if(map.containsKey(valKey.toString())) {
-				double sum = map.get(valKey.toString()) + ((DoubleWritable)entry.getValue()).get();
-				map.put(valKey.toString(),sum);
-	   		} else {
-				map.put(valKey.toString(), ((DoubleWritable)entry.getValue()).get() );
-	   		}
+    	   	String valKey = ((Text)entry.getKey()).toString();
+
+			double entryVal = ((DoubleWritable)entry.getValue()).get();
+            if(map.containsKey(valKey)) {
+                entryVal += map.get(valKey);
+            }
+
+//			System.out.println("Pair: " + key + "," + valKey);
+//			System.out.println("Value: " + entryVal);
+            map.put(valKey, entryVal);
         }
       }
 
@@ -185,6 +192,8 @@ public class Part3 {
 		result.set(entry.getValue());
 		context.write(pair, result);
       }
+
+	  map.clear();
     }
   }
 
@@ -210,8 +219,6 @@ public class Part3 {
 
     FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
     FileOutputFormat.setOutputPath(job, outputPath);
-
-    System.out.println("Starting second job");
 
     Configuration conf2 = new Configuration();
     conf2.set("mapreduce.output.textoutputformat.separator", ",");
