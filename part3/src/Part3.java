@@ -55,44 +55,80 @@ public class Part3 {
 
     }
   }
-  
-  public static class GeneReducer 
+
+  public static class GeneCombiner 
        extends Reducer<IntWritable,Text,IntWritable,Text> {
     private Text result = new Text();
+//	private Map<Integer, String> treeMap = new TreeMap<Integer, String>();
 
     public void reduce(IntWritable key, Iterable<Text> values, 
                        Context context
                        ) throws IOException, InterruptedException {
 
-	  String ret = "";
+	  	String ret = "";
 /*
-      HashMap<Integer,String> map = new HashMap<Integer,String>();
-      for (Text val : values) {
-		String[] pair = val.toString().split(":");
-		int intVal = Integer.parseInt(pair[0]);
-		map.put(intVal,pair[1]);
-      }
+	    for (Text val : values) {
+			String[] pair = val.toString().split(":");
+			int intVal = Integer.parseInt(pair[0]);
+			treeMap.put(intVal,pair[1]);
+      	}
+		for (Map.Entry<Integer, String> entry : treeMap.entrySet()) {
+			int mapKey = entry.getKey();
+			String value = entry.getValue();
 
-	  Map<Integer, String> treeMap = new TreeMap<Integer, String>(map);
+			ret += mapKey+":"+value+",";
+      	}
+    	result.set(ret.substring(0,ret.length()-1));
+*/
+		for (Text val : values) {
+			ret += val.toString() + ",";
+		}
+
+		result.set(ret.substring(0,ret.length()-1));
+		context.write(key, result);			
+
+//		treeMap.clear();
+    }
+  }
+  
+  public static class GeneReducer 
+       extends Reducer<IntWritable,Text,IntWritable,Text> {
+    private Text result = new Text();
+	private Map<Integer, String> treeMap = new TreeMap<Integer, String>();
+
+    public void reduce(IntWritable key, Iterable<Text> values, 
+                       Context context
+                       ) throws IOException, InterruptedException {
+
+	  	String ret = "";
+/*
+	    for (Text val : values) {
+			String[] pair = val.toString().split(":");
+			int intVal = Integer.parseInt(pair[0]);
+			treeMap.put(intVal,pair[1]);
+      	}
 */
 
-	  Map<Integer, String> treeMap = new TreeMap<Integer, String>();
-      for (Text val : values) {
-		String[] pair = val.toString().split(":");
-		int intVal = Integer.parseInt(pair[0]);
-		treeMap.put(intVal,pair[1]);
-      }
+	    for (Text val : values) {
+			String[] tokens = val.toString().split(",");
+			for (String sample : tokens) {
+				String[] pair = sample.toString().split(":");
+				int intVal = Integer.parseInt(pair[0]);
+				treeMap.put(intVal,pair[1]);
+			}
+      	}
+	
+		for (Map.Entry<Integer, String> entry : treeMap.entrySet()) {
+			int mapKey = entry.getKey();
+			String value = entry.getValue();
 
-	  for (Map.Entry<Integer, String> entry : treeMap.entrySet()) {
-		int mapKey = entry.getKey();
-		String value = entry.getValue();
+			ret += mapKey+":"+value+",";
+      	}
 
-		ret += mapKey+":"+value+",";
-      }
-
-      result.set(ret.substring(0,ret.length()-1));
-	//TODO: don't need to send geneID as key
-      context.write(key, result);
+    	  result.set(ret.substring(0,ret.length()-1));
+ 		//TODO: don't need to send geneID as key
+        context.write(key, result);
+		treeMap.clear();
     }
   }
 
@@ -102,6 +138,8 @@ public class Part3 {
     private MapWritable result = new MapWritable();
     private Text sID = new Text();  
 	private ArrayList<String> list = new ArrayList<String>();
+	private DoubleWritable xProduct = new DoubleWritable();
+	private Text sample2ID = new Text();
 
     public void map(Object key, Text value, Context context
                     ) throws IOException, InterruptedException {
@@ -117,9 +155,12 @@ public class Part3 {
 
 		for (String item2 : list) {
 	   		String[] t2 = item2.split(":");
-	   		double xProduct = Double.parseDouble(t2[1])*v1;
+
+			xProduct.set( Double.parseDouble(t2[1])*v1 );
+			sample2ID.set( t2[0] );
 	//		System.out.println("Key1: "+t1[0]+", Key2: "+t2[0]+", Value: "+xProduct);
-	   		result.put( new Text(t2[0]), new DoubleWritable(xProduct));
+			
+	   		result.put( sample2ID, xProduct);
 		}
 
 		if (!list.isEmpty()) {
@@ -138,7 +179,7 @@ public class Part3 {
        extends Reducer<Text,MapWritable,Text,MapWritable> {
  
 	private MapWritable result = new MapWritable();
-
+	private DoubleWritable sum = new DoubleWritable();
    public void reduce(Text key, Iterable<MapWritable> values, 
                        Context context
                        ) throws IOException, InterruptedException {
@@ -152,7 +193,8 @@ public class Part3 {
 				entryVal += ((DoubleWritable)result.get(valKey)).get();
 	     	}
 
-	     	result.put(valKey, new DoubleWritable(entryVal));
+			sum.set(entryVal);
+	     	result.put(valKey, sum);
 	  	}
 	  }
 
@@ -213,6 +255,7 @@ public class Part3 {
     Job job = cJob1.getJob();
     job.setJarByClass(Part3.class);
     job.setMapperClass(GeneMapper.class);
+	job.setCombinerClass(GeneCombiner.class);
     job.setReducerClass(GeneReducer.class);
     job.setOutputKeyClass(IntWritable.class);
     job.setOutputValueClass(Text.class);

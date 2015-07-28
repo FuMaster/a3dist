@@ -1,10 +1,13 @@
-register Part4_3.jar;
+--register Part4_3.jar;
 sampleDatas = LOAD '$input' USING PigStorage(',');
--- AS (sampleID:chararray, geneValues:chararray); --reads in a line of input
-geneDatas = FOREACH sampleDatas GENERATE $0 AS sampleID, TOTUPLE($1..) AS geneValues:tuple();
+
+geneBag1 = FOREACH sampleDatas GENERATE $0 AS sampleID1, (bag{tuple()})TOBAG(TOTUPLE($1..)) AS geneValues1:bag{t:tuple()};
+
+geneBag2 = FOREACH sampleDatas GENERATE $0 AS sampleID2, (bag{tuple()})TOBAG(TOTUPLE($1..)) AS geneValues2:bag{t:tuple()};
 
 --rankedGenes = RANK geneDatas;
-geneTuples = FOREACH geneDatas GENERATE sampleID, Part4_3(geneValues);
+geneX = CROSS geneBag1, geneBag2;
+geneX2 = FILTER geneX BY geneBag1::sampleID1 > geneBag2::sampleID2; --sampleID 1 and sampleID 2
 
 --DUMP highestValues;
-STORE highestValues INTO '$output' USING PigStorage(',');
+STORE geneX INTO '$output' USING PigStorage(',');
