@@ -1,4 +1,4 @@
-register pigPart1.jar;
+register Part4_1.jar;
 sampleDatas = LOAD '$input' USING PigStorage(',');
 -- AS (sampleID:chararray, geneValues:chararray); --reads in a line of input
 geneDatas = FOREACH sampleDatas GENERATE $0 AS sampleID, TOTUPLE($1..) AS geneValues:tuple();
