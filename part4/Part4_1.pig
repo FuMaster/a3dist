@@ -4,7 +4,7 @@ sampleDatas = LOAD '$input' USING PigStorage(',');
 geneDatas = FOREACH sampleDatas GENERATE $0 AS sampleID, TOTUPLE($1..) AS geneValues:tuple();
 
 --rankedGenes = RANK geneDatas;
-highestValues = FOREACH geneDatas GENERATE sampleID, pigPart1(geneValues);
+highestValues = FOREACH geneDatas GENERATE sampleID, Part4_1(geneValues);
 
 --DUMP highestValues;
 STORE highestValues INTO '$output' USING PigStorage(',');
