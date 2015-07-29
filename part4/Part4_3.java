@@ -32,7 +32,6 @@ public class Part4_3 extends EvalFunc<String>{
 				double v2 = Double.parseDouble(sample2[i]);
 
 				sum += v1*v2;
-				System.out.println(sum);
 			}
 
 			return sample1[0]+","+sample2[0]+","+sum;
