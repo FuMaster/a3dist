@@ -11,7 +11,7 @@ geneX2 = FILTER geneX BY geneBag1::sampleID1 > geneBag2::sampleID2;
 
 --temp = FOREACH geneX2 GENERATE TOTUPLE($0..) as name:tuple();
 
-pair = FOREACH geneX2 GENERATE Part4_3(TOTUPLE($0..));
---pair = FOREACH geneX2 GENERATE Part4_3($0..);
+--pair = FOREACH geneX2 GENERATE Part4_3(TOTUPLE($0..));
+pair = FOREACH geneX2 GENERATE Part4_3($0..);
 --DUMP highestValues;
 STORE pair INTO '$output' USING PigStorage(',');

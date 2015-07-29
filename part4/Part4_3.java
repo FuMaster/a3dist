@@ -14,8 +14,21 @@ public class Part4_3 extends EvalFunc<String>{
 	BagFactory mBF = BagFactory.getInstance();
 	List<String> list = new ArrayList<String>();
 
-	public String exec(Tuple tuple) throws IOException {
+	public String exec(Tuple input) throws IOException {
 		try{
+			DataBag bag=(DataBag)input.get(0);
+			Iterator<Tuple> it=bag.iterator();
+
+			Tuple t1 = it.next();
+			Tuple t2 = it.next();
+
+			double sum = 0.0;
+			for (int i=1; i < t1.size(); i++) {
+				double v1 = Double.parseDouble(t1.get(i));
+				double v2 = Double.parseDouble(t2.get(i));
+				sum += v1*v2;
+			}
+/*
 			String str = tuple.toDelimitedString(",");
 			String str2 = str.replaceAll( "[\\(\\{\\)]", "");
 			str2 = str2.substring(0, str2.length()-1);
@@ -33,8 +46,8 @@ public class Part4_3 extends EvalFunc<String>{
 
 				sum += v1*v2;
 			}
-
-			return sample1[0]+","+sample2[0]+","+sum;
+*/
+			return t1[0]+","+t2[0]+","+sum;
 		} catch(Exception e) {
 			throw e;
 		}
