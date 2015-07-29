@@ -9,32 +9,33 @@ import org.apache.hadoop.io.WritableComparable;
 import java.util.List;
 import java.util.ArrayList;
 
-public class Part4_3 extends EvalFunc<DataBag>{
+public class Part4_3 extends EvalFunc<String>{
 	TupleFactory mTF = TupleFactory.getInstance();
 	BagFactory mBF = BagFactory.getInstance();
 	List<String> list = new ArrayList<String>();
 
-	public DataBag exec(Tuple tuple) throws IOException {
+	public String exec(Tuple tuple) throws IOException {
 		try{
 			String str = tuple.toDelimitedString(",");
-			String str2 = str.replaceAll( "\\(", "");
-			String str3 = str2.replaceAll( "\\)", "");
-			String[] tokens = str3.split(",");
+			String str2 = str.replaceAll( "[\\(\\{\\)]", "");
+			str2 = str2.substring(0, str2.length()-1);
 
-			//String sampleID = tokens[0].split("_")[1];
-			String sampleID = tokens[0];
+			String[] tokens = str2.split("},");
 
-			DataBag output = mBF.newDefaultBag();
-			for(int i=1;i<tokens.length;i++) {
-				if (tokens[i].equals("0.0")) {
-					continue;
-				}
-				list.add(Integer.toString(i));
-				list.add(sampleID+":"+tokens[i]);
-				output.add(mTF.newTuple(list));
-				list.clear();
+			double sum = 0.0;
+
+			String[] sample1 = tokens[0].split(",");
+			String[] sample2 = tokens[1].split(",");
+
+			for(int i=1; i < sample2.length; i++) {
+				double v1 = Double.parseDouble(sample1[i]);
+				double v2 = Double.parseDouble(sample2[i]);
+
+				sum += v1*v2;
+				System.out.println(sum);
 			}
-			return output;
+
+			return sample1[0]+","+sample2[0]+","+sum;
 		} catch(Exception e) {
 			throw e;
 		}

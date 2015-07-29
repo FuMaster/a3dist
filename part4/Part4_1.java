@@ -8,9 +8,9 @@ public class Part4_1 extends EvalFunc<String>{
   public String exec(Tuple tuple) throws IOException {
     try{
       String str = tuple.toDelimitedString(",");
-      String str2 = str.replaceAll("\\(","");
-      String str3 = str2.replaceAll("\\)","");
-      String[] tokens = str3.split(",");
+      String str2 = str.replaceAll("[\\(\\)]", "");
+	  System.out.println(str2);
+      String[] tokens = str2.split(",");
       
       double max = 0;
       String result = "";
